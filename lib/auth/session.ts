@@ -18,12 +18,12 @@ export async function comparePasswords(
 }
 
 type SessionData = {
-  user: { id: number };
+  user: { id: number | string };
   expires: string;
 };
 
 export async function signToken(payload: SessionData) {
-  return await new SignJWT(payload)
+  return await new SignJWT(payload as unknown as Record<string, unknown>)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1 day from now')
@@ -34,7 +34,7 @@ export async function verifyToken(input: string) {
   const { payload } = await jwtVerify(input, key, {
     algorithms: ['HS256'],
   });
-  return payload as SessionData;
+  return payload as unknown as SessionData;
 }
 
 export async function getSession() {
@@ -46,7 +46,7 @@ export async function getSession() {
 export async function setSession(user: NewUser) {
   const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const session: SessionData = {
-    user: { id: user.id! },
+    user: { id: user.id!.toString() },
     expires: expiresInOneDay.toISOString(),
   };
   const encryptedSession = await signToken(session);
